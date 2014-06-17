@@ -1,6 +1,6 @@
 REBOL []
 
-mustache: import %./mustache.r
+mustache: import %../src/mustache.reb
 
 tpl: to string! read %./template.tpl
 
