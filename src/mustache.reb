@@ -1,6 +1,9 @@
 REBOL [
 	Title: "Mustache templates parser and renderer"
 	Author: "Andrea Galimberti"
+	Type: 'module
+	Name: 'mustache
+	Exports: [ render ]
 	Rights: http://www.gnu.org/copyleft/lesser.html
 	Home: http://github.com/kronwiz/r3-mustache
 ]
@@ -156,13 +159,8 @@ This function represents one iteration and mustn't be called directly.}
 	name [ string! ]  "name of the key to check for"
 ] [
 
-	;print [ "**** name:" name ]
-	;print mold view-stack
-
 	view: first view-stack
 	value: select view name
-
-	;print [ "** view:" mold view ]
 
 	if value = none [
 		if not head? view-stack [
@@ -192,6 +190,8 @@ This function represents one iteration in the rendering process and mustn't be c
 	view-stack [ block! ]  "stack of view blocks"
 	ctxt [ block! ]  "hash-type block with partial templates identified by names"
 	parsed-templates-list [ block! ]  "hash-type block with the structures of partials after parsing"
+	dump-output [ function! ]  "function used to output each rendered chunk"
+	res-buffer [ block! ]  "buffer to append each rendered chunk to. It's passed to the dump-output function"
 ] [
 
 	forall parsed-template [
@@ -199,25 +199,28 @@ This function represents one iteration in the rendering process and mustn't be c
 
 		switch chunk/type [
 			text [
-				prin copy/part at template chunk/startpos ( chunk/endpos - chunk/startpos + 1 )
+				dump-output res-buffer copy/part at template chunk/startpos ( chunk/endpos - chunk/startpos + 1 )
 			]
 
 			tag [
 				switch chunk/tagtype [
 					value [
 						value: get-value-from-stack view-stack chunk/name
-						; TODO: here we should escape HTML markers
-						if value <> none [ prin value ]
+						if value <> none [
+							; There should be a better way
+							if string? value [ replace/all replace/all replace/all value "&" "&amp;" "<" "&lt;" ">" "&gt;" ]
+							dump-output res-buffer value
+						]
 					]
 
 					unescaped [
 						value: get-value-from-stack view-stack chunk/name
-						if value <> none [ prin value ]
+						if value <> none [ dump-output res-buffer value ]
 					]
 
 					unescapedb [
 						value: get-value-from-stack view-stack chunk/name
-						if value <> none [ prin value ]
+						if value <> none [ dump-output res-buffer value ]
 					]
 
 					section [
@@ -229,7 +232,7 @@ This function represents one iteration in the rendering process and mustn't be c
 								; because the endsection chunk is expecting a value to pop from
 								; the stack.
 								append/only view-stack reduce [ "__dummy__" value ]
-								render-recursive template chunk/children view-stack ctxt parsed-templates-list
+								res-buffer: render-recursive template chunk/children view-stack ctxt parsed-templates-list :dump-output res-buffer
 							] [
 								; the content of "value" is a list of blocks. We put each block as the
 								; last item in the view-stack, each time replacing the previous one, so
@@ -241,7 +244,7 @@ This function represents one iteration in the rendering process and mustn't be c
 										change/only back tail view-stack first value
 									]
 
-									render-recursive template chunk/children view-stack ctxt parsed-templates-list
+									res-buffer: render-recursive template chunk/children view-stack ctxt parsed-templates-list :dump-output res-buffer
 								]
 							]
 						]
@@ -251,7 +254,7 @@ This function represents one iteration in the rendering process and mustn't be c
 						value: get-value-from-stack view-stack chunk/name
 						if any [ value = none value = false all [ series? a empty? a ] ] [
 							append/only view-stack reduce [ "__dummy__" value ]
-							render-recursive template chunk/children view-stack ctxt parsed-templates-list
+							res-buffer: render-recursive template chunk/children view-stack ctxt parsed-templates-list :dump-output res-buffer
 						]
 					]
 
@@ -263,21 +266,51 @@ This function represents one iteration in the rendering process and mustn't be c
 						ptpl: select parsed-templates-list chunk/name
 						if ptpl <> none [
 							tpl: select ctxt chunk/name
-							render-recursive tpl ptpl view-stack ctxt parsed-templates-list
+							res-buffer: render-recursive tpl ptpl view-stack ctxt parsed-templates-list :dump-output res-buffer
 						]
 					]
 				]
 			]
 		]
 	]
+
+	res-buffer
+]
+
+
+get-output-func: function [
+	{Returns a function that outputs the results of the rendering process}
+	type [ word! ]  "Type of function to return"
+] [
+	switch/default type [
+		stream [
+			function [
+				{This version immediately prints the value without adding it to a buffer}
+				buffer [ block! ]  "Buffer to add the value to"
+				value  "Value to be dumped"
+			] [
+				prin value
+			]
+		]
+	] [
+		; in the default case we use the function that appends the value to a buffer
+		function [
+			{This version adds the value to the buffer}
+			buffer [ block! ]  "Buffer to add the value to"
+			value  "Value to be added"
+		] [
+			append buffer value
+		]
+	]
 ]
 
 
 render: function [
-	{Renders the template according to the values provided in "view"}
+	{Renders the template according to the values provided in "view". Returns the result as a string.}
 	template [ string! ]  "string buffer containing the mustache template"
 	view [ block! ]  "hash-type block with values identified by names (keys)"
 	ctxt [ block! ]  "hash-type block with partial templates identified by names"
+	/stream  "if specified the result is not retured, but it's printed to standard output during rendering"
 ] [
 
 	view-stack: copy []
@@ -285,9 +318,8 @@ render: function [
 
 	parsed-templates: parse-template "__main__" template ctxt []
 
+	dump-output: get-output-func either stream [ 'stream ] [ 'buffer ]
 	ptpl: select parsed-templates "__main__"
-	render-recursive template ptpl view-stack ctxt parsed-templates
-
-	print ""
+	ajoin render-recursive template ptpl view-stack ctxt parsed-templates :dump-output []
 ]
 

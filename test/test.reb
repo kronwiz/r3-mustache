@@ -22,5 +22,5 @@ view: [
 ;pt: mustache/parse-template "__main__" tpl ctxt []
 ;print mold pt
 
-mustache/render tpl view ctxt
+print mold mustache/render/stream tpl view ctxt
 
