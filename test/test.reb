@@ -68,3 +68,20 @@ view: [
 ;print mold mustache/parse-template "__main__" tpl [] []
 mustache/render/stream tpl view []
 
+print "^/*** Test partial from file ***"
+tpl: to string! read %./test_partial_from_file.tpl
+ctxt: [
+	"subtemplate" %./test_partial_from_file_subtemplate.tpl
+]
+
+view: [
+	"row" [
+		[ "number" 1 ]
+		[ "number" 2 ]
+		[ "number" 3 ]
+		[ "number" 4 ]
+	]
+]
+;print mold mustache/parse-template "__main__" tpl ctxt []
+mustache/render/stream tpl view ctxt
+

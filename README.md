@@ -20,7 +20,7 @@ Arguments:
 
 * `template`: string buffer containing the mustache template;
 * `view`: hash-like block containing each tag name followed by its value;
-* `ctxt`: hash-like block containing each partial template name followed by a string with the actual template in it.
+* `ctxt`: hash-like block containing each partial template name followed by a string (or file path) with the actual template in it.
     
 Refinements:
 
@@ -224,7 +224,10 @@ Output:
 
 ### Partials
 
-Partials must be contained in the context block passed as a parameter to the `render` function.
+Partials must be specified in the context block passed as a parameter to the `render` function. A partial is identified by a name and its value in the context block can be of two types:
+
+* `string!`: it's a buffer containing the actual partial template as a string;
+* `file!`: it's a path of a file containing the partial template.
 
 
 ## License

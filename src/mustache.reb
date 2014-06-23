@@ -124,7 +124,10 @@ parse-template: function [
 
 					partial [
 						tpl: select ctxt currchunk/name
-						if tpl <> none [ parse-template currchunk/name tpl ctxt partials ]
+						if tpl <> none [
+							if file? tpl [ tpl: to string! read tpl ]
+							parse-template currchunk/name tpl ctxt partials
+						]
 					]
 				]
 			)
@@ -140,7 +143,7 @@ parse-template: function [
 			; newline immediately following the tag
 			any newline currpos: (
 				; skip it if it's a section tag
-				if find [ section invsection endsection ] currchunk/tagtype [
+				if find [ section invsection endsection partial ] currchunk/tagtype [
 					last-tag-end: ( index? currpos ) - 1
 				]
 			)
@@ -274,6 +277,7 @@ This function represents one iteration in the rendering process and mustn't be c
 						ptpl: select parsed-templates-list chunk/name
 						if ptpl <> none [
 							tpl: select ctxt chunk/name
+							if file? tpl [ tpl: to string! read tpl ]
 							res-buffer: render-recursive tpl ptpl view-stack ctxt parsed-templates-list :dump-output res-buffer
 						]
 					]
