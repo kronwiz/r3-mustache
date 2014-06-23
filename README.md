@@ -1,8 +1,33 @@
-#r3-mustache
+# r3-mustache
 
 Mustache templates renderer for Rebol 3
 
 ## Usage
+
+The mustache module exports the `render` function.
+
+### render
+
+Syntax:
+
+    render template view ctxt /stream
+    
+Description:
+
+Renders the template according to the values provided in `view`. Returns the result as a string.
+    
+Arguments:
+
+* `template`: string buffer containing the mustache template;
+* `view`: hash-like block containing each tag name followed by its value;
+* `ctxt`: hash-like block containing each partial template name followed by a string with the actual template in it.
+    
+Refinements:
+
+* `/stream`: if specified the result is not retured, but it's printed to standard output during rendering.
+
+
+### Full example
 
     mustache: import %./mustache.reb
 
@@ -19,6 +44,15 @@ Mustache templates renderer for Rebol 3
     ]
 
     mustache/render tpl view ctxt
+
+And the `template.tpl` file contains:
+
+    Hello {{name}}
+    You have {{{just won}}} {{value}} dollars!
+    {{#in_ca}}
+    Well, {{taxed_value}} dollars, after taxes.
+    {{/in_ca}}
+    Here we have another {{>thing}} to parse. Last piece of text.
 
 
 ## Templates
@@ -50,7 +84,7 @@ Will produce the following:
 
     Hello Chris
     You have just won 10000 dollars!
-    Well, 6000.0 dollars, after taxes.
+    Well, 6000 dollars, after taxes.
 
 
 ### Variables
@@ -65,7 +99,7 @@ Template:
 Block:
 
     [
-      "name" "Chris",
+      "name" "Chris"
       "company" "<b>GitHub</b>"
     ]
 

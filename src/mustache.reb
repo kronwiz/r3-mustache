@@ -136,6 +136,14 @@ parse-template: function [
 				last-tag-end: currpos - 1
 				if currchunk/tagtype = 'unescapedb [ last-tag-end: currpos ]
 			)
+
+			; newline immediately following the tag
+			any newline currpos: (
+				; skip it if it's a section tag
+				if find [ section invsection endsection ] currchunk/tagtype [
+					last-tag-end: ( index? currpos ) - 1
+				]
+			)
 		]
 	]
 
@@ -208,7 +216,7 @@ This function represents one iteration in the rendering process and mustn't be c
 						value: get-value-from-stack view-stack chunk/name
 						if value <> none [
 							; There should be a better way
-							if string? value [ replace/all replace/all replace/all value "&" "&amp;" "<" "&lt;" ">" "&gt;" ]
+							if string? value [ value: replace/all replace/all replace/all copy value "&" "&amp;" "<" "&lt;" ">" "&gt;" ]
 							dump-output res-buffer value
 						]
 					]
@@ -316,10 +324,10 @@ render: function [
 	view-stack: copy []
 	append/only view-stack view
 
-	parsed-templates: parse-template "__main__" template ctxt []
+	parsed-templates: parse-template "__main__" template ctxt copy []
 
 	dump-output: get-output-func either stream [ 'stream ] [ 'buffer ]
 	ptpl: select parsed-templates "__main__"
-	ajoin render-recursive template ptpl view-stack ctxt parsed-templates :dump-output []
+	ajoin render-recursive template ptpl view-stack ctxt parsed-templates :dump-output copy []
 ]
 

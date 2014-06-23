@@ -2,6 +2,7 @@ REBOL []
 
 mustache: import %../src/mustache.reb
 
+print "*** First template ***"
 tpl: to string! read %./template.tpl
 
 ctxt: [ "thing" "This is a {{field}} in a row." ]
@@ -19,8 +20,51 @@ view: [
 	"field" "field!"
 ]
 
-;pt: mustache/parse-template "__main__" tpl ctxt []
-;print mold pt
+mustache/render/stream tpl view ctxt
 
-print mold mustache/render/stream tpl view ctxt
+print "^/*** Test escape ***"
+tpl: to string! read %./test_escape.tpl
+view: [
+	"name" "Chris"
+	"company" "<b>GitHub</b>"
+]
+;print mold mustache/parse-template "__main__" tpl [] []
+mustache/render/stream tpl view []
+
+print "^/*** Test section false value ***"
+tpl: to string! read %./test_section_false_value.tpl
+view: reduce [
+	"person" false
+]
+;print mold mustache/parse-template "__main__" tpl [] []
+mustache/render/stream tpl view []
+
+print "^/*** Test section non empty list ***"
+tpl: to string! read %./test_section_non_empty_list.tpl
+view: [
+  "repo" [
+    [ "name" "resque" ]
+    [ "name" "hub" ]
+    [ "name" "rip" ]
+  ]
+]
+
+;print mold mustache/parse-template "__main__" tpl [] []
+mustache/render/stream tpl view []
+
+print "^/*** Test inverted section ***"
+tpl: to string! read %./test_section_inverted.tpl
+view: [
+	"repo" []
+]
+;print mold mustache/parse-template "__main__" tpl [] []
+mustache/render/stream tpl view []
+
+print "^/*** Test comment ***"
+tpl: to string! read %./test_comment.tpl
+view: [
+	"repo" []
+]
+;print mold mustache/parse-template "__main__" tpl [] []
+mustache/render/stream tpl view []
 
