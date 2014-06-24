@@ -237,7 +237,7 @@ This function represents one iteration in the rendering process and mustn't be c
 					section [
 						value: get-value-from-stack view-stack chunk/name
 						if all [ value <> none value <> false ] [
-							either not series? value [
+							either not block? value [
 								; the content of "value" is not false: its actual value doesn't
 								; really matter. Nonetheless we have to add it to view-stack
 								; because the endsection chunk is expecting a value to pop from
@@ -245,6 +245,13 @@ This function represents one iteration in the rendering process and mustn't be c
 								append/only view-stack reduce [ "__dummy__" value ]
 								res-buffer: render-recursive template chunk/children view-stack ctxt parsed-templates-list :dump-output res-buffer
 							] [
+								; if value is not a list of blocks it's transformed to a list
+								; with itself as the first and only block. This is done to be
+								; compatible with the loop below.
+								if all [ not empty? value not block? first value ] [
+									value: reduce [ value ]
+								]
+
 								; the content of "value" is a list of blocks. We put each block as the
 								; last item in the view-stack, each time replacing the previous one, so
 								; that the view-stack grows only by one item.
@@ -263,7 +270,7 @@ This function represents one iteration in the rendering process and mustn't be c
 
 					invsection [
 						value: get-value-from-stack view-stack chunk/name
-						if any [ value = none value = false all [ series? a empty? a ] ] [
+						if any [ value = none value = false all [ series? value empty? value ] ] [
 							append/only view-stack reduce [ "__dummy__" value ]
 							res-buffer: render-recursive template chunk/children view-stack ctxt parsed-templates-list :dump-output res-buffer
 						]

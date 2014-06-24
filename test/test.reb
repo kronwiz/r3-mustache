@@ -52,6 +52,15 @@ view: [
 ;print mold mustache/parse-template "__main__" tpl [] []
 mustache/render/stream tpl view []
 
+print "^/*** Test section non false value ***"
+tpl: to string! read %./test_section_non_false_value.tpl
+view: [
+  "person?" [ "name" "Jon" ]
+]
+
+;print mold mustache/parse-template "__main__" tpl [] []
+mustache/render/stream tpl view []
+
 print "^/*** Test inverted section ***"
 tpl: to string! read %./test_section_inverted.tpl
 view: [

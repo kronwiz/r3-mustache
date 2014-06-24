@@ -181,8 +181,6 @@ Output:
 
 **Non-False Values**
 
-TO BE IMPLEMENTED. By now you can replace non-false values with non-empty list.
-
 Template:
 
     {{#person?}}
