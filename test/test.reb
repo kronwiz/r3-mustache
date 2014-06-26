@@ -94,3 +94,12 @@ view: [
 ;print mold mustache/parse-template "__main__" tpl ctxt []
 mustache/render/stream tpl view ctxt
 
+print "^/*** Test section lambda ***"
+tpl: to string! read %./test_section_lambda.tpl
+view: reduce [
+	"name" "Willy"
+	"wrapped" function [ text ] [ ajoin [ "<b>" text "</b>" ] ]
+]
+;print mold mustache/parse-template "__main__" tpl [] []
+mustache/render/stream tpl view []
+

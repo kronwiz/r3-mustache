@@ -173,13 +173,15 @@ This function represents one iteration and mustn't be called directly.}
 	view: first view-stack
 	value: select view name
 
-	if value = none [
+	if :value = none [
 		if not head? view-stack [
 			return get-value-from-stack-recursive back view-stack name
 		]
 	]
 
-	value
+	; this must be a get-word because if "value" it's a function
+	; it must not be evaluated
+	:value
 ]
 
 
@@ -236,14 +238,24 @@ This function represents one iteration in the rendering process and mustn't be c
 
 					section [
 						value: get-value-from-stack view-stack chunk/name
-						if all [ value <> none value <> false ] [
-							either not block? value [
+						if all [ :value <> none :value <> false ] [
+							either not block? :value [
 								; the content of "value" is not false: its actual value doesn't
 								; really matter. Nonetheless we have to add it to view-stack
 								; because the endsection chunk is expecting a value to pop from
 								; the stack.
-								append/only view-stack reduce [ "__dummy__" value ]
-								res-buffer: render-recursive template chunk/children view-stack ctxt parsed-templates-list :dump-output res-buffer
+								append/only view-stack reduce [ "__dummy__" :value ]
+
+								either function? :value [
+									c: first chunk/children
+									tstart: c/startpos
+									c: last chunk/children
+									tend: c/endpos
+									text: copy/part at template tstart ( tend - tstart + 1 )
+									dump-output res-buffer value text
+								] [
+									res-buffer: render-recursive template chunk/children view-stack ctxt parsed-templates-list :dump-output res-buffer
+								]
 							] [
 								; if value is not a list of blocks it's transformed to a list
 								; with itself as the first and only block. This is done to be
