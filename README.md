@@ -18,7 +18,7 @@ Renders the template according to the values provided in `view`. Returns the res
     
 Arguments:
 
-* `template`: string buffer containing the mustache template;
+* `template`: string buffer or file name containing the mustache template;
 * `view`: hash-like block containing each tag name followed by its value;
 * `ctxt`: hash-like block containing each partial template name followed by a string (or file path) with the actual template in it.
     
@@ -158,8 +158,6 @@ Output:
 
 **Lambdas**
 
-TO BE IMPLEMENTED
-
 Template:
 
     {{#wrapped}}
@@ -168,12 +166,20 @@ Template:
 
 Block:
 
-    [
+    reduce [
       "name" "Willy"
-      "wrapped" function [ text render ] [
-        ajoin [ "<b>" render text "</b>" ]
+      "wrapped" function [ text view ctxt ] [
+        ajoin [ "<b>" trim/lines mustache/render text view ctxt "</b>" crlf ]
       ]
     ]
+
+The function must accept three parameters:
+
+* `text`: the unparsed section text;
+* `view`: the original block passed to the `render` function;
+* `ctxt`: the original context passed to the `render` function.
+
+The function can do whatever it likes, even calling again the `render` function with different view and context, or with the same view and context received from the calling environment.
 
 Output:
 

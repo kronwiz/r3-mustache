@@ -95,10 +95,13 @@ view: [
 mustache/render/stream tpl view ctxt
 
 print "^/*** Test section lambda ***"
-tpl: to string! read %./test_section_lambda.tpl
+; note that "tpl" can also be a file name
+tpl: %./test_section_lambda.tpl
 view: reduce [
 	"name" "Willy"
-	"wrapped" function [ text ] [ ajoin [ "<b>" text "</b>" ] ]
+	"wrapped" function [ text view ctxt ] [
+		ajoin [ "<b>" trim/lines mustache/render text view ctxt "</b>" crlf ]
+	]
 ]
 ;print mold mustache/parse-template "__main__" tpl [] []
 mustache/render/stream tpl view []

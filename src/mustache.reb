@@ -252,7 +252,9 @@ This function represents one iteration in the rendering process and mustn't be c
 									c: last chunk/children
 									tend: c/endpos
 									text: copy/part at template tstart ( tend - tstart + 1 )
-									dump-output res-buffer value text
+									; the function in "value" is called with the unparsed section text,
+									; the original view and context passed to the render call.
+									dump-output res-buffer value text first view-stack ctxt
 								] [
 									res-buffer: render-recursive template chunk/children view-stack ctxt parsed-templates-list :dump-output res-buffer
 								]
@@ -338,11 +340,15 @@ get-output-func: function [
 
 render: function [
 	{Renders the template according to the values provided in "view". Returns the result as a string.}
-	template [ string! ]  "string buffer containing the mustache template"
+	template [ string! file! ]  "string buffer or file name containing the mustache template"
 	view [ block! ]  "hash-type block with values identified by names (keys)"
 	ctxt [ block! ]  "hash-type block with partial templates identified by names"
 	/stream  "if specified the result is not retured, but it's printed to standard output during rendering"
 ] [
+
+	if file? template [
+		template: to string! read template
+	]
 
 	view-stack: copy []
 	append/only view-stack view
