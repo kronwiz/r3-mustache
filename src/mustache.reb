@@ -220,8 +220,7 @@ This function represents one iteration in the rendering process and mustn't be c
 					value [
 						value: get-value-from-stack view-stack chunk/name
 						if value <> none [
-							; There should be a better way
-							if string? value [ value: replace/all replace/all replace/all copy value "&" "&amp;" "<" "&lt;" ">" "&gt;" ]
+							if string? value [ value: sanitize value ]
 							dump-output res-buffer value
 						]
 					]
@@ -358,5 +357,32 @@ render: function [
 	dump-output: get-output-func either stream [ 'stream ] [ 'buffer ]
 	ptpl: select parsed-templates "__main__"
 	ajoin render-recursive template ptpl view-stack ctxt parsed-templates :dump-output copy []
+]
+
+
+; =========================================================
+; sanitize function
+; extracted from RSP Preprocessor
+; Author: "Christopher Ross-Gill"
+; Source: http://reb4.me/r3/rsp
+; Docs: http://www.ross-gill.com/page/RSP_Text_Preprocessor
+; =========================================================
+
+sanitize: use [ascii html* extended][
+	html*: exclude ascii: charset ["^/^-" #"^(20)" - #"^(7E)"] charset {&<>"}
+	extended: complement charset [#"^(00)" - #"^(7F)"]
+
+	func [text [any-string!] /local char][
+		parse/all form text [
+			copy text any [
+				text: some html*
+				| change #"<" "&lt;" | change #">" "&gt;" | change #"&" "&amp;"
+				| change #"^"" "&quot;" | remove #"^M"
+				| remove copy char extended (char: rejoin ["&#" to integer! char/1 ";"]) insert char
+				| remove copy char skip (char: rejoin ["#(" to integer! char/1 ")"]) insert char
+			]
+		]
+		any [text copy ""]
+	]
 ]
 
